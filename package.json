@@ -1,0 +1,84 @@
+﻿{
+  "name": "codex-goal-retry",
+  "displayName": "Codex Goal Retry",
+  "description": "Goal-only long-interval retry patch manager for the OpenAI Codex VS Code extension.",
+  "version": "0.1.0",
+  "publisher": "vanex",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zenger-sun/codex-goal-retry.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Zenger-sun/codex-goal-retry/issues"
+  },
+  "homepage": "https://github.com/Zenger-sun/codex-goal-retry#readme",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "codex",
+    "openai",
+    "goal",
+    "heartbeat",
+    "retry",
+    "vscode-extension"
+  ],
+  "activationEvents": [
+    "onCommand:codexGoalRetry.inspect",
+    "onCommand:codexGoalRetry.applyPatch",
+    "onCommand:codexGoalRetry.restorePatch"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codexGoalRetry.inspect",
+        "title": "Codex Goal Retry: Inspect Installed Codex"
+      },
+      {
+        "command": "codexGoalRetry.applyPatch",
+        "title": "Codex Goal Retry: Apply Goal Retry Patch"
+      },
+      {
+        "command": "codexGoalRetry.restorePatch",
+        "title": "Codex Goal Retry: Restore Original Codex Bundle"
+      }
+    ],
+    "configuration": {
+      "title": "Codex Goal Retry",
+      "properties": {
+        "codexGoalRetry.intervalMinutes": {
+          "type": "number",
+          "default": 5,
+          "enum": [
+            5,
+            10,
+            30
+          ],
+          "description": "Long retry interval in minutes after the built-in Codex goal/heartbeat retry path has failed. Choose 5, 10, or 30 minutes."
+        },
+        "codexGoalRetry.codexExtensionId": {
+          "type": "string",
+          "default": "openai.chatgpt",
+          "description": "VS Code extension id for the OpenAI Codex extension."
+        },
+        "codexGoalRetry.codexExtensionPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional absolute path to the OpenAI Codex extension directory. Leave empty to resolve it from VS Code."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "check:syntax": "node --check src/extension.js && node --check src/patcher.js && node --check scripts/check.js",
+    "check:installed": "node scripts/check.js",
+    "test:patcher": "node scripts/self-test.js",
+    "test": "npm run check:syntax && npm run test:patcher"
+  },
+  "devDependencies": {}
+}
