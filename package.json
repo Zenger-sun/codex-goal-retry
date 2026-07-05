@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "codex-goal-retry",
   "displayName": "Codex Goal Retry",
   "description": "Goal-only long-interval retry patch manager for the OpenAI Codex VS Code extension.",

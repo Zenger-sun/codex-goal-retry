@@ -34,6 +34,109 @@ Codex webview bundle 中已有 heartbeat automation resume 流程。当前失败
 
 ## 使用
 
+### 本地操作手册
+
+#### 1. 安装当前项目到 VS Code
+
+先在项目目录中确认语法和补丁逻辑正常：
+
+```bash
+npm.cmd run test
+npm.cmd run check:installed
+```
+
+如果 `check:installed` 输出的 `Goal retry patch status` 是 `supported-original` 或 `patched`，可以继续打包安装：
+
+```bash
+vsce.cmd package
+code.cmd --install-extension codex-goal-retry-0.1.0.vsix --force
+```
+
+如果本机没有全局安装 `vsce`，也可以使用：
+
+```bash
+npx @vscode/vsce package
+code --install-extension codex-goal-retry-0.1.0.vsix --force
+```
+
+安装完成后，VS Code 扩展列表中应能看到 `Codex Goal Retry`。
+
+#### 2. 应用长期重试补丁
+
+安装本扩展后不会自动修改 Codex，需要手动应用补丁：
+
+1. 在 VS Code 按 `Ctrl+Shift+P` 打开命令面板。
+2. 运行 `Codex Goal Retry: Inspect Installed Codex`，确认当前状态。
+3. 运行 `Codex Goal Retry: Apply Goal Retry Patch`。
+4. 确认弹窗中的 `Apply Patch`。
+5. Reload VS Code。
+
+应用后，Codex 原有 750ms 短重试仍会保留；本工具只额外增加 goal/heartbeat 场景的长期重试。
+
+#### 3. 修改重试时间
+
+打开 VS Code 设置，搜索 `Codex Goal Retry`，修改 `Interval Minutes`。
+
+也可以直接在 VS Code `settings.json` 中写入：
+
+```json
+{
+  "codexGoalRetry.intervalMinutes": 10
+}
+```
+
+目前只支持 `5`、`10`、`30` 分钟。修改设置后，需要再次运行：
+
+```text
+Codex Goal Retry: Apply Goal Retry Patch
+```
+
+然后 Reload VS Code。重试时间会写入 Codex webview bundle，只改设置但不重新应用补丁不会改变已写入的等待时间。
+
+#### 4. 查看当前补丁状态
+
+在命令面板运行：
+
+```text
+Codex Goal Retry: Inspect Installed Codex
+```
+
+也可以在项目目录运行：
+
+```bash
+npm.cmd run check:installed
+```
+
+常见状态含义：
+
+- `supported-original`：当前 Codex bundle 是支持的原始版本，可以应用补丁。
+- `patched`：已经应用过本工具补丁。
+- `unsupported-signature`：Codex 更新后目标代码签名变化，暂时不要应用补丁，需要先重新分析适配。
+- `not-found`：没有找到目标 heartbeat/goal webview 资产。
+
+#### 5. 关闭长期重试并恢复原始 Codex
+
+如果想关闭本工具增加的长期重试，必须先恢复原始 Codex bundle：
+
+1. 在 VS Code 按 `Ctrl+Shift+P` 打开命令面板。
+2. 运行 `Codex Goal Retry: Restore Original Codex Bundle`。
+3. 确认弹窗中的 `Restore`。
+4. Reload VS Code。
+
+恢复后，长期重试会关闭，Codex 回到原始 heartbeat/goal retry 行为。
+
+注意：单纯禁用或卸载 `Codex Goal Retry` 扩展，不一定会撤销已经写入 Codex bundle 的补丁。正确关闭顺序是先运行 `Restore Original Codex Bundle`，再按需禁用或卸载本扩展。
+
+#### 6. 卸载本扩展
+
+确认已经运行 `Restore Original Codex Bundle` 并 Reload VS Code 后，可以在扩展面板中卸载 `Codex Goal Retry`，也可以使用命令行：
+
+```bash
+code.cmd --uninstall-extension vanex.codex-goal-retry
+```
+
+如果之后重新安装或 Codex 自动更新，建议先运行 `Inspect Installed Codex` 或 `npm.cmd run check:installed`，确认状态后再应用补丁。
+
 ### 从 GitHub 获取
 
 ```bash
