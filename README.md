@@ -114,7 +114,69 @@ npm.cmd run check:installed
 - `unsupported-signature`：Codex 更新后目标代码签名变化，暂时不要应用补丁，需要先重新分析适配。
 - `not-found`：没有找到目标 heartbeat/goal webview 资产。
 
-#### 5. 关闭长期重试并恢复原始 Codex
+#### 5. 确认重试机制已经生效
+
+确认分为两步：
+
+1. 确认真实安装的 Codex bundle 已经写入补丁。
+2. 用本项目的本地仿真场景确认“失败后长期重试”逻辑会触发。
+
+先检查真实安装状态：
+
+```bash
+npm.cmd run check:installed
+```
+
+如果输出包含类似信息，说明补丁已经写入真实 Codex bundle：
+
+```text
+Goal retry patch status: patched
+Long retry delay: 300000 ms
+Preserves built-in 750ms retry: yes
+Preserves failed-thread marker path: yes
+```
+
+`Long retry delay` 对应关系：
+
+- `300000 ms`：5 分钟
+- `600000 ms`：10 分钟
+- `1800000 ms`：30 分钟
+
+然后运行本地失败重试仿真：
+
+```bash
+npm.cmd run test:retry-scenario
+```
+
+该测试会在系统临时目录构造一个假的 Codex 扩展目录，写入和真实补丁相同的 catch 分支，再用 fake timer 模拟 goal/heartbeat 失败后的重试路径。它不会修改本机真实安装的 OpenAI Codex 扩展。
+
+通过时会看到：
+
+```text
+retry scenario passed
+patched status: patched
+long retry delay: 300000 ms (5 minutes)
+terminal goal failure: schedules one deduplicated long retry, clears failed-thread marker, triggers resume
+normal failure: preserves built-in 750 ms retry and also schedules long retry
+resolved goal: long timer does not trigger resume when goal is already resolved
+```
+
+这表示：
+
+- goal/heartbeat 失败后会记录 `heartbeat_automation_resume_failed`。
+- 对同一个 thread 只会安排一个长期重试计时器，避免重复堆积。
+- 长期计时器触发时会清理 failed-thread 标记，并触发 Codex 原本的 resume 检查。
+- 普通失败仍保留 Codex 原本的 750ms 短重试。
+- 如果 goal 已经结束，长期计时器不会再触发 resume。
+
+也可以指定仿真中的长期重试间隔：
+
+```bash
+node scripts/retry-scenario.js 10
+node scripts/retry-scenario.js 30
+```
+
+#### 6. 关闭长期重试并恢复原始 Codex
 
 如果想关闭本工具增加的长期重试，必须先恢复原始 Codex bundle：
 
@@ -127,7 +189,7 @@ npm.cmd run check:installed
 
 注意：单纯禁用或卸载 `Codex Goal Retry` 扩展，不一定会撤销已经写入 Codex bundle 的补丁。正确关闭顺序是先运行 `Restore Original Codex Bundle`，再按需禁用或卸载本扩展。
 
-#### 6. 卸载本扩展
+#### 7. 卸载本扩展
 
 确认已经运行 `Restore Original Codex Bundle` 并 Reload VS Code 后，可以在扩展面板中卸载 `Codex Goal Retry`，也可以使用命令行：
 

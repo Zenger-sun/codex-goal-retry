@@ -75,10 +75,11 @@
     }
   },
   "scripts": {
-    "check:syntax": "node --check src/extension.js && node --check src/patcher.js && node --check scripts/check.js",
+    "check:syntax": "node --check src/extension.js && node --check src/patcher.js && node --check scripts/check.js && node --check scripts/retry-scenario.js",
     "check:installed": "node scripts/check.js",
     "test:patcher": "node scripts/self-test.js",
-    "test": "npm run check:syntax && npm run test:patcher"
+    "test:retry-scenario": "node scripts/retry-scenario.js",
+    "test": "npm run check:syntax && npm run test:patcher && npm run test:retry-scenario"
   },
   "devDependencies": {}
 }
